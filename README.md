@@ -4,6 +4,7 @@ subtitle: Python module for Large Scale Orchestration of OpenFoam computations.
 author: Johan Hidding, Pablo Rodríguez Sanchez
 ---
 [![Entangled badge](https://img.shields.io/badge/entangled-Use%20the%20source!-%2300aeff)](https://entangled.github.io/)
+[![Python package](https://github.com/parallelwindfarms/pylso-foam/actions/workflows/python-package.yml/badge.svg)](https://github.com/parallelwindfarms/pylso-foam/actions/workflows/python-package.yml)
 
 This module lets you interact with OpenFOAM through Python. You may use it in cases where you need to run a lot of separate computations in OpenFOAM, possibly in parallel. In our view, this fixes a few gaps in the PyFoam module. Here's what `pylso-foam` can and `PyFoam` can't do:
 
