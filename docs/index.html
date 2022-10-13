@@ -1,0 +1,728 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <meta name="author" content="Johan Hidding, Pablo Rodríguez Sanchez" />
+  <title>pylso-foam</title>
+  <style>
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    span.underline{text-decoration: underline;}
+    div.column{display: inline-block; vertical-align: top; width: 50%;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    ul.task-list{list-style: none;}
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+  <link rel="stylesheet" href="theme.css" />
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml-full.js" type="text/javascript"></script>
+  <!--[if lt IE 9]>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/html5shiv/3.7.3/html5shiv-printshiv.min.js"></script>
+  <![endif]-->
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">pylso-foam</h1>
+<p class="subtitle">Python module for Large Scale Orchestration of OpenFoam computations.</p>
+<p class="author">Johan Hidding, Pablo Rodríguez Sanchez</p>
+<!--        <div id="dark-mode-toggle">
+                <p>Dark mode: <button class="dark-mode-button"
+                        aria-label="Toggle dark mode"
+                        onclick="toggle_dark_mode()">
+                        <span></span><span></span>
+                </button></p>
+</div> -->
+</header>
+<div class="row">
+        <div class="col-6 col-s-9" id="main">
+<p><a href="https://entangled.github.io/"><img src="https://img.shields.io/badge/entangled-Use%20the%20source!-%2300aeff" alt="Entangled badge" /></a></p>
+<p>This module lets you interact with OpenFOAM through Python. You may use it in cases where you need to run a lot of separate computations in OpenFOAM, possibly in parallel. In our view, this fixes a few gaps in the PyFoam module. Here’s what <code>pylso-foam</code> can and <code>PyFoam</code> can’t do: - Run jobs in parallel: PyFoam has a lot of hidden state. In <code>pylso-foam</code> every job runs in its own case directory. - Work with binary OpenFOAM files: by using the <a href="https://parallelwindfarms.github.io/byteparsing"><code>byteparsing</code></a> package, we can interact with binary data. We don’t involve any geometry here, we can just read the raw data and do some arithmetic on it.</p>
+<section id="admin" class="level1">
+<h1>Admin</h1>
+<p>You may <code>pip install</code> this module. If you’re developing however, we use <code>poetry</code> to manage dependencies.</p>
+</section>
+<section id="license" class="level1">
+<h1>License</h1>
+<p>Apache 2</p>
+</section>
+<section id="architecture" class="level1">
+<h1>Architecture</h1>
+<p>From the perspective of the Parareal algorithm we are solving an ODE.</p>
+<section id="implementation" class="level2">
+<h2>Implementation</h2>
+<p>The abstract <code>Vector</code>, defined below, represents any single state in the simulation. In OpenFOAM we have the following folder structure:</p>
+<pre><code>├── 0
+│   ├── p
+│   └── U
+├── 1
+│   └── &lt;... data fields ...&gt;
+├── &lt;... time directories ...&gt;
+├── constant
+│   ├── transportProperties
+│   └── turbulenceProperties
+└── system
+    ├── blockMeshDict
+    ├── controlDict
+    ├── decomposeParDict
+    ├── fvSchemes
+    └── fvSolution</code></pre>
+<p>For our application a <code>Vector</code> is then a combination of an OpenFOAM case (i.e. the folder structure above), and a string denoting the time directory matching the referred snapshot. The directory structure containing only the <code>0</code> time is now the <code>BaseCase</code>. We can copy a <code>Vector</code> by copying the contents of the <code>BaseCase</code> and the single time directory that belongs to that <code>Vector</code>.</p>
+<div class="named-code-block">
+<p>file:pylsoFoam/vector.py</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> __future__ <span class="im">import</span> annotations</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> operator</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> mmap</span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> weakref</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> gc</span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> contextlib <span class="im">import</span> contextmanager</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> dataclasses <span class="im">import</span> dataclass</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> uuid <span class="im">import</span> uuid4</span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> shutil <span class="im">import</span> copytree, rmtree   <span class="co"># , copy</span></span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> typing <span class="im">import</span> List, Optional</span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-15"><a href="#cb2-15" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> byteparsing <span class="im">import</span> parse_bytes, foam_file</span>
+<span id="cb2-16"><a href="#cb2-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-17"><a href="#cb2-17" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> PyFoam.RunDictionary.ParsedParameterFile <span class="im">import</span> ParsedParameterFile  <span class="co"># type: ignore</span></span>
+<span id="cb2-18"><a href="#cb2-18" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> PyFoam.RunDictionary.SolutionDirectory <span class="im">import</span> SolutionDirectory      <span class="co"># type: ignore</span></span>
+<span id="cb2-19"><a href="#cb2-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-20"><a href="#cb2-20" aria-hidden="true" tabindex="-1"></a><span class="op">&lt;&lt;</span>base<span class="op">-</span>case<span class="op">&gt;&gt;</span></span>
+<span id="cb2-21"><a href="#cb2-21" aria-hidden="true" tabindex="-1"></a><span class="op">&lt;&lt;</span>pintfoam<span class="op">-</span>vector<span class="op">&gt;&gt;</span></span></code></pre></div>
+</div>
+<section id="base-case" class="level3">
+<h3>Base case</h3>
+<p>We will operate on a <code>Vector</code> the same way everything is done in OpenFOAM, that is:</p>
+<ol type="1">
+<li>Copy-paste a case (known as the base case)</li>
+<li>Edit the copy with new simulation parameters</li>
+<li>Run the simulation</li>
+</ol>
+<p>This is why for every <code>Vector</code> we define a <code>BaseCase</code> that is used to generate new vectors. The <code>BaseCase</code> should have only one time directory containing the initial conditions, namely <code>0</code>. The simulation generates new folders containing the data corresponding to different times. The time is coded, somewhat uncomfortably, in the directory name (<code>0.01</code>, <code>0.02</code>, and so on), which is why we store the time coordinate as a string.</p>
+<p>The class <code>Vector</code> takes care of all those details.</p>
+<div class="named-code-block">
+<p>«base-case»</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="at">@dataclass</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> BaseCase:</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>    <span class="co">&quot;&quot;&quot;Base case is a cleaned version of the system. If it contains any fields,</span></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="co">    it will only be the `0` time. Any field that is copied for manipulation will</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="co">    do so on top of an available base case in the `0` slot.&quot;&quot;&quot;</span></span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>    root: Path</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>    case: <span class="bu">str</span></span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>    fields: Optional[List[<span class="bu">str</span>]] <span class="op">=</span> <span class="va">None</span></span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>    <span class="at">@property</span></span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> path(<span class="va">self</span>):</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="va">self</span>.root <span class="op">/</span> <span class="va">self</span>.case</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> new_vector(<span class="va">self</span>, name: Optional[<span class="bu">str</span>] <span class="op">=</span> <span class="va">None</span>):</span>
+<span id="cb3-15"><a href="#cb3-15" aria-hidden="true" tabindex="-1"></a>        <span class="co">&quot;&quot;&quot;Creates new `Vector` using this base case.&quot;&quot;&quot;</span></span>
+<span id="cb3-16"><a href="#cb3-16" aria-hidden="true" tabindex="-1"></a>        new_case <span class="op">=</span> name <span class="kw">or</span> uuid4().<span class="bu">hex</span></span>
+<span id="cb3-17"><a href="#cb3-17" aria-hidden="true" tabindex="-1"></a>        new_path <span class="op">=</span> <span class="va">self</span>.root <span class="op">/</span> new_case</span>
+<span id="cb3-18"><a href="#cb3-18" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> <span class="kw">not</span> new_path.exists():</span>
+<span id="cb3-19"><a href="#cb3-19" aria-hidden="true" tabindex="-1"></a>            copytree(<span class="va">self</span>.path, new_path)</span>
+<span id="cb3-20"><a href="#cb3-20" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> Vector(<span class="va">self</span>, new_case, <span class="st">&quot;0&quot;</span>)</span>
+<span id="cb3-21"><a href="#cb3-21" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-22"><a href="#cb3-22" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> all_vector_paths(<span class="va">self</span>):</span>
+<span id="cb3-23"><a href="#cb3-23" aria-hidden="true" tabindex="-1"></a>        <span class="co">&quot;&quot;&quot;Iterates all sub-directories in the root.&quot;&quot;&quot;</span></span>
+<span id="cb3-24"><a href="#cb3-24" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> (x <span class="cf">for</span> x <span class="kw">in</span> <span class="va">self</span>.root.iterdir()</span>
+<span id="cb3-25"><a href="#cb3-25" aria-hidden="true" tabindex="-1"></a>                <span class="cf">if</span> x.is_dir() <span class="kw">and</span> x.name <span class="op">!=</span> <span class="va">self</span>.case)</span>
+<span id="cb3-26"><a href="#cb3-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-27"><a href="#cb3-27" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> clean(<span class="va">self</span>):</span>
+<span id="cb3-28"><a href="#cb3-28" aria-hidden="true" tabindex="-1"></a>        <span class="co">&quot;&quot;&quot;Deletes all vectors of this base-case.&quot;&quot;&quot;</span></span>
+<span id="cb3-29"><a href="#cb3-29" aria-hidden="true" tabindex="-1"></a>        <span class="cf">for</span> path <span class="kw">in</span> <span class="va">self</span>.all_vector_paths():</span>
+<span id="cb3-30"><a href="#cb3-30" aria-hidden="true" tabindex="-1"></a>            rmtree(path)</span></code></pre></div>
+</div>
+<p>In our implementation, if no name is given to a new vector, a random one is generated.</p>
+</section>
+<section id="retrieving-files-and-time-directories" class="level3">
+<h3>Retrieving files and time directories</h3>
+<p>Note that the <code>BaseCase</code> has a property <code>path</code>. The same property will be defined in <code>Vector</code>. We can use this common property to retrieve a <code>SolutionDirectory</code>, <code>ParameterFile</code> or <code>TimeDirectory</code>.</p>
+<ul class="task-list">
+<li><input type="checkbox" disabled="" />
+These are PyFoam routines that may need to be replaced</li>
+</ul>
+<div class="named-code-block">
+<p>«pintfoam-vector»</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> solution_directory(case):</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> SolutionDirectory(case.path)</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> parameter_file(case, relative_path):</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> ParsedParameterFile(case.path <span class="op">/</span> relative_path)</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> time_directory(case):</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> solution_directory(case)[case.time]</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> get_times(path):</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a>    <span class="co">&quot;&quot;&quot;Get all the snapshots in a case, sorted on floating point value.&quot;&quot;&quot;</span></span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> isfloat(s: <span class="bu">str</span>) <span class="op">-&gt;</span> <span class="bu">bool</span>:</span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>        <span class="cf">try</span>:</span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a>            <span class="bu">float</span>(s)</span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> <span class="va">True</span></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>        <span class="cf">except</span> <span class="pp">ValueError</span>:</span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> <span class="va">False</span></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="bu">sorted</span>(</span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>        [s.name <span class="cf">for</span> s <span class="kw">in</span> path.iterdir() <span class="cf">if</span> isfloat(s.name)],</span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a>        key<span class="op">=</span><span class="bu">float</span>)</span></code></pre></div>
+</div>
+</section>
+<section id="vector" class="level3">
+<h3>Vector</h3>
+<p>The <code>Vector</code> class stores a reference to the <code>BaseCase</code>, a case name and a time.</p>
+<div class="named-code-block">
+<p>«pintfoam-vector»</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="at">@dataclass</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="kw">class</span> Vector:</span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    base: BaseCase</span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    case: <span class="bu">str</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a>    time: <span class="bu">str</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a>    <span class="op">&lt;&lt;</span>pintfoam<span class="op">-</span>vector<span class="op">-</span>properties<span class="op">&gt;&gt;</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a>    <span class="op">&lt;&lt;</span>pintfoam<span class="op">-</span>vector<span class="op">-</span>clone<span class="op">&gt;&gt;</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>    <span class="op">&lt;&lt;</span>pintfoam<span class="op">-</span>vector<span class="op">-</span>operate<span class="op">&gt;&gt;</span></span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>    <span class="op">&lt;&lt;</span>pintfoam<span class="op">-</span>vector<span class="op">-</span>operators<span class="op">&gt;&gt;</span></span></code></pre></div>
+</div>
+<p>From a vector we can extract a file path pointing to the specified time slot, list the containing files and read out <code>internalField</code> from any of those files.</p>
+<div class="named-code-block">
+<p>«pintfoam-vector-properties»</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="at">@property</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> path(<span class="va">self</span>):</span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a>    <span class="co">&quot;&quot;&quot;Case path, i.e. the path containing `system`, `constant` and snapshots.&quot;&quot;&quot;</span></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="va">self</span>.base.root <span class="op">/</span> <span class="va">self</span>.case</span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-6"><a href="#cb6-6" aria-hidden="true" tabindex="-1"></a><span class="at">@property</span></span>
+<span id="cb6-7"><a href="#cb6-7" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> fields(<span class="va">self</span>):</span>
+<span id="cb6-8"><a href="#cb6-8" aria-hidden="true" tabindex="-1"></a>    <span class="co">&quot;&quot;&quot;All fields relevant to this base case.&quot;&quot;&quot;</span></span>
+<span id="cb6-9"><a href="#cb6-9" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="va">self</span>.base.fields</span>
+<span id="cb6-10"><a href="#cb6-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-11"><a href="#cb6-11" aria-hidden="true" tabindex="-1"></a><span class="at">@property</span></span>
+<span id="cb6-12"><a href="#cb6-12" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> dirname(<span class="va">self</span>):</span>
+<span id="cb6-13"><a href="#cb6-13" aria-hidden="true" tabindex="-1"></a>    <span class="co">&quot;&quot;&quot;The path of this snapshot.&quot;&quot;&quot;</span></span>
+<span id="cb6-14"><a href="#cb6-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="va">self</span>.path <span class="op">/</span> <span class="va">self</span>.time</span>
+<span id="cb6-15"><a href="#cb6-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-16"><a href="#cb6-16" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> all_times(<span class="va">self</span>):</span>
+<span id="cb6-17"><a href="#cb6-17" aria-hidden="true" tabindex="-1"></a>    <span class="co">&quot;&quot;&quot;Get all available times, in order.&quot;&quot;&quot;</span></span>
+<span id="cb6-18"><a href="#cb6-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> [Vector(<span class="va">self</span>.base, <span class="va">self</span>.case, t)</span>
+<span id="cb6-19"><a href="#cb6-19" aria-hidden="true" tabindex="-1"></a>            <span class="cf">for</span> t <span class="kw">in</span> get_times(<span class="va">self</span>.path)]</span></code></pre></div>
+</div>
+<p>We do arithmetic on <code>Vector</code> by cloning an existing <code>Vector</code> and then modify the <code>internalField</code> values inside. This can be done very efficiently using memory-mapped array access. The <code>mmap_data</code> member takes care of loading the data and closing the file when we’re done with it in a nifty context manager.</p>
+<div class="named-code-block">
+<p>«pintfoam-vector-properties»</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="at">@contextmanager</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> mmap_data(<span class="va">self</span>, field):</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>    <span class="co">&quot;&quot;&quot;Context manager that yields a **mutable** reference to the data contained</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="co">    in this snapshot. Mutations done to this array are mmapped to the disk directly.&quot;&quot;&quot;</span></span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a>    f <span class="op">=</span> (<span class="va">self</span>.dirname <span class="op">/</span> field).<span class="bu">open</span>(mode<span class="op">=</span><span class="st">&quot;r+b&quot;</span>)</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">with</span> mmap.mmap(f.fileno(), <span class="dv">0</span>) <span class="im">as</span> mm:</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>        content <span class="op">=</span> parse_bytes(foam_file, mm)</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a>        <span class="cf">try</span>:</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a>            result <span class="op">=</span> content[<span class="st">&quot;data&quot;</span>][<span class="st">&quot;internalField&quot;</span>]</span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a>        <span class="cf">except</span> <span class="pp">KeyError</span> <span class="im">as</span> e:</span>
+<span id="cb7-11"><a href="#cb7-11" aria-hidden="true" tabindex="-1"></a>            <span class="bu">print</span>(content)</span>
+<span id="cb7-12"><a href="#cb7-12" aria-hidden="true" tabindex="-1"></a>            <span class="cf">raise</span> e</span>
+<span id="cb7-13"><a href="#cb7-13" aria-hidden="true" tabindex="-1"></a>        <span class="cf">yield</span> weakref.ref(result)</span>
+<span id="cb7-14"><a href="#cb7-14" aria-hidden="true" tabindex="-1"></a>        <span class="kw">del</span> result</span>
+<span id="cb7-15"><a href="#cb7-15" aria-hidden="true" tabindex="-1"></a>        <span class="kw">del</span> content</span>
+<span id="cb7-16"><a href="#cb7-16" aria-hidden="true" tabindex="-1"></a>        gc.collect()</span></code></pre></div>
+</div>
+<p>We clone a vector by creating a new vector and copying the internal fields.</p>
+<div class="named-code-block">
+<p>«pintfoam-vector-clone»</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> clone(<span class="va">self</span>, name: Optional[<span class="bu">str</span>] <span class="op">=</span> <span class="va">None</span>) <span class="op">-&gt;</span> Vector:</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">&quot;&quot;&quot;Clone this vector to a new one. The clone only contains this single snapshot.&quot;&quot;&quot;</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    x <span class="op">=</span> <span class="va">self</span>.base.new_vector(name)</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    x.time <span class="op">=</span> <span class="va">self</span>.time</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    rmtree(x.dirname, ignore_errors<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>    copytree(<span class="va">self</span>.dirname, x.dirname)</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> x</span></code></pre></div>
+</div>
+<p>In order to apply the parareal algorithm to our vectors (or indeed, any other algorithm worth that name), we need to define how to operate with them. Particularly, we’ll need to implement:</p>
+<ul>
+<li>Vector addition and subtraction (as we’ll need to sum and subtract the results of applying the coarse and fine integrators)</li>
+<li>Vector scaling (as the integrators involve scaling with the inverse of the step)</li>
+</ul>
+<p>In order to achieve this, first we’ll write generic recipes for <strong>any</strong> operation between vectors and <strong>any</strong> operation between a scalar and a vector:</p>
+<div class="named-code-block">
+<p>«pintfoam-vector-operate»</p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> zip_with(<span class="va">self</span>, other: Vector, op) <span class="op">-&gt;</span> Vector:</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    x <span class="op">=</span> <span class="va">self</span>.clone()</span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> f <span class="kw">in</span> <span class="va">self</span>.fields:</span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>        <span class="cf">with</span> x.mmap_data(f) <span class="im">as</span> a, other.mmap_data(f) <span class="im">as</span> b:</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>            a()[:] <span class="op">=</span> op(a(), b())</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> x</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> <span class="bu">map</span>(<span class="va">self</span>, f) <span class="op">-&gt;</span> Vector:</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>    x <span class="op">=</span> <span class="va">self</span>.clone()</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> f <span class="kw">in</span> <span class="va">self</span>.fields:</span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>        <span class="cf">with</span> x.mmap_data(f) <span class="im">as</span> a:</span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a>            a()[:] <span class="op">=</span> f(a())</span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> x</span></code></pre></div>
+</div>
+<p>We now have the tools to define vector addition, subtraction and scaling.</p>
+<div class="named-code-block">
+<p>«pintfoam-vector-operators»</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> <span class="fu">__sub__</span>(<span class="va">self</span>, other: Vector) <span class="op">-&gt;</span> Vector:</span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="va">self</span>.zip_with(other, operator.sub)</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> <span class="fu">__add__</span>(<span class="va">self</span>, other: Vector) <span class="op">-&gt;</span> Vector:</span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="va">self</span>.zip_with(other, operator.add)</span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> <span class="fu">__mul__</span>(<span class="va">self</span>, scale: <span class="bu">float</span>) <span class="op">-&gt;</span> Vector:</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="va">self</span>.<span class="bu">map</span>(<span class="kw">lambda</span> x: x <span class="op">*</span> scale)</span></code></pre></div>
+</div>
+<p>In the code chunk above we used the so-called magic methods. If we use a minus sign to subtract two vectors, the method <code>__sub__</code> is being executed under the hood.</p>
+</section>
+</section>
+</section>
+<section id="openfoam-calls" class="level1">
+<h1>OpenFOAM calls</h1>
+<div class="named-code-block">
+<p>file:pylsoFoam/foam.py</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> subprocess</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> math</span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> typing <span class="im">import</span> Optional, Union</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> .vector <span class="im">import</span> (BaseCase, Vector, parameter_file, get_times)</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a><span class="op">&lt;&lt;</span>pintfoam<span class="op">-</span><span class="bu">map</span><span class="op">-</span>fields<span class="op">&gt;&gt;</span></span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a><span class="op">&lt;&lt;</span>pintfoam<span class="op">-</span><span class="bu">set</span><span class="op">-</span>fields<span class="op">&gt;&gt;</span></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a><span class="op">&lt;&lt;</span>pintfoam<span class="op">-</span>block<span class="op">-</span>mesh<span class="op">&gt;&gt;</span></span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a><span class="op">&lt;&lt;</span>pintfoam<span class="op">-</span>epsilon<span class="op">&gt;&gt;</span></span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a><span class="op">&lt;&lt;</span>pintfoam<span class="op">-</span>solution<span class="op">&gt;&gt;</span></span></code></pre></div>
+</div>
+<section id="setfields-utility" class="level2">
+<h2><code>setFields</code> utility</h2>
+<p>We may want to call <code>setFields</code> on our <code>Vector</code> to setup some test cases.</p>
+<div class="named-code-block">
+<p>«pintfoam-set-fields»</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> set_fields(v, <span class="op">*</span>, default_field_values, regions):</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">&quot;&quot;&quot;Wrapper for OpenFOAM&#39;s setFields.&quot;&quot;&quot;</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    x <span class="op">=</span> parameter_file(v, <span class="st">&quot;system/setFieldsDict&quot;</span>)</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>    x[<span class="st">&#39;defaultFieldValues&#39;</span>] <span class="op">=</span> default_field_values</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>    x[<span class="st">&#39;regions&#39;</span>] <span class="op">=</span> regions</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>    x.writeFile()</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>    subprocess.run(<span class="st">&quot;setFields&quot;</span>, cwd<span class="op">=</span>v.path, check<span class="op">=</span><span class="va">True</span>)</span></code></pre></div>
+</div>
+</section>
+<section id="mapfields" class="level2">
+<h2><code>mapFields</code></h2>
+<p>The <code>mapFields</code> utility interpolates a field from one mesh onto another. The resulting field values are written to the <code>0</code> time directory, so we need to rename that directory after calling <code>mapFields</code> for consistency with the <code>Vector</code> infrastrucutre.</p>
+<div class="named-code-block">
+<p>«pintfoam-map-fields»</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> map_fields(source: Vector, target: BaseCase, consistent<span class="op">=</span><span class="va">True</span>, map_method<span class="op">=</span><span class="va">None</span>) <span class="op">-&gt;</span> Vector:</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">&quot;&quot;&quot;Wrapper for OpenFOAM&#39;s mapFields</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a><span class="co">    Use consistent=False if the initial and final boundaries differ.</span></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a><span class="co">    Valid arguments for `map_method`: mapNearest, interpolate, cellPointInterpolate</span></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a><span class="co">    &quot;&quot;&quot;</span></span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>    result <span class="op">=</span> target.new_vector()</span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>    result.time <span class="op">=</span> source.time</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>    arg_lst <span class="op">=</span> [<span class="st">&quot;mapFields&quot;</span>]</span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> consistent:</span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>        arg_lst.append(<span class="st">&quot;-consistent&quot;</span>)</span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> map_method <span class="kw">is</span> <span class="kw">not</span> <span class="va">None</span>:</span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>        arg_lst.extend([<span class="st">&quot;-mapMethod&quot;</span>, map_method])</span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>    arg_lst.extend([<span class="st">&quot;-sourceTime&quot;</span>, source.time, source.path.resolve()])</span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>    subprocess.run(arg_lst, cwd<span class="op">=</span>result.path, check<span class="op">=</span><span class="va">True</span>)</span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>    (result.path <span class="op">/</span> <span class="st">&quot;0&quot;</span>).rename(result.dirname)</span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> result</span></code></pre></div>
+</div>
+</section>
+<section id="blockmesh" class="level2">
+<h2><code>blockMesh</code></h2>
+<p>The <code>blockMesh</code> utility generates an OpenFOAM mesh from a description in the <code>blockMesh</code> format. This is usually called on a <code>baseCase</code> so that the mesh information is shared by all vectors.</p>
+<div class="named-code-block">
+<p>«pintfoam-block-mesh»</p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> block_mesh(case: BaseCase):</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">&quot;&quot;&quot;Wrapper for OpenFOAM&#39;s blockMesh.&quot;&quot;&quot;</span></span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>    subprocess.run(<span class="st">&quot;blockMesh&quot;</span>, cwd<span class="op">=</span>case.path, check<span class="op">=</span><span class="va">True</span>)</span></code></pre></div>
+</div>
+</section>
+<section id="implementation-of-solution" class="level2">
+<h2>Implementation of <code>Solution</code></h2>
+<p>Remember, the definition of a <code>Solution</code>,</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>Solution <span class="op">=</span> Callable[[Vector, <span class="bu">float</span>, <span class="bu">float</span>], Vector]</span></code></pre></div>
+<p>meaning, we write a function taking a current state <code>Vector</code>, the time <em>now</em>, and the <em>target</em> time, returning a new <code>Vector</code> for the target time.</p>
+<p>The solver will write directories with floating-point valued names. This is a very bad idea by the folks at OpenFOAM, but it is one we’ll have to live with. Suppose you have a time-step of <span class="math inline">\(0.1\)</span>, what will be the names of the directories if you integrate from <span class="math inline">\(0\)</span> to <span class="math inline">\(0.5\)</span>?</p>
+<div class="sourceCode" id="cb16" data-session="0"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>[x <span class="op">*</span> <span class="fl">0.1</span> <span class="cf">for</span> x <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">6</span>)]</span></code></pre></div>
+<p>In Python 3.7, this gives <code>[0.0, 0.1, 0.2, 0.30000000000000004, 0.4, 0.5]</code>. Surely, if you give a time-step of <span class="math inline">\(0.1\)</span> to OpenFOAM, it will create a directory named <code>0.3</code> instead. We’ll define the constant <code>epsilon</code> to aid us in identifying the correct state directory given a floating-point time.</p>
+<div class="named-code-block">
+<p>«pintfoam-epsilon»</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>epsilon <span class="op">=</span> <span class="fl">1e-6</span></span></code></pre></div>
+</div>
+<p>Our solution depends on the solver chosen and the given time-step:</p>
+<div class="named-code-block">
+<p>«pintfoam-solution»</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> foam(solver: <span class="bu">str</span>, dt: <span class="bu">float</span>, x: Vector, t_0: <span class="bu">float</span>, t_1: <span class="bu">float</span>,</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a>         write_interval: Optional[<span class="bu">float</span>] <span class="op">=</span> <span class="va">None</span>,</span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>         job_name: Optional[<span class="bu">str</span>] <span class="op">=</span> <span class="va">None</span>,</span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>         write_control: <span class="bu">str</span> <span class="op">=</span> <span class="st">&quot;runTime&quot;</span>) <span class="op">-&gt;</span> Vector:</span>
+<span id="cb18-5"><a href="#cb18-5" aria-hidden="true" tabindex="-1"></a>    <span class="co">&quot;&quot;&quot;Call an OpenFOAM code.</span></span>
+<span id="cb18-6"><a href="#cb18-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-7"><a href="#cb18-7" aria-hidden="true" tabindex="-1"></a><span class="co">    Args:</span></span>
+<span id="cb18-8"><a href="#cb18-8" aria-hidden="true" tabindex="-1"></a><span class="co">        solver: The name of the solver (e.g. &quot;icoFoam&quot;, &quot;scalarTransportFoam&quot; etc.)</span></span>
+<span id="cb18-9"><a href="#cb18-9" aria-hidden="true" tabindex="-1"></a><span class="co">        dt:     deltaT parameter</span></span>
+<span id="cb18-10"><a href="#cb18-10" aria-hidden="true" tabindex="-1"></a><span class="co">        x:      initial state</span></span>
+<span id="cb18-11"><a href="#cb18-11" aria-hidden="true" tabindex="-1"></a><span class="co">        t_0:    startTime (should match that in initial state)</span></span>
+<span id="cb18-12"><a href="#cb18-12" aria-hidden="true" tabindex="-1"></a><span class="co">        t_1:    endTime</span></span>
+<span id="cb18-13"><a href="#cb18-13" aria-hidden="true" tabindex="-1"></a><span class="co">        write_interval: if not given, this is computed so that only the endTime</span></span>
+<span id="cb18-14"><a href="#cb18-14" aria-hidden="true" tabindex="-1"></a><span class="co">                is written.</span></span>
+<span id="cb18-15"><a href="#cb18-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-16"><a href="#cb18-16" aria-hidden="true" tabindex="-1"></a><span class="co">    Returns:</span></span>
+<span id="cb18-17"><a href="#cb18-17" aria-hidden="true" tabindex="-1"></a><span class="co">        The `Vector` representing the end state.</span></span>
+<span id="cb18-18"><a href="#cb18-18" aria-hidden="true" tabindex="-1"></a><span class="co">    &quot;&quot;&quot;</span></span>
+<span id="cb18-19"><a href="#cb18-19" aria-hidden="true" tabindex="-1"></a>    <span class="op">&lt;&lt;</span>pintfoam<span class="op">-</span>solution<span class="op">-</span>function<span class="op">&gt;&gt;</span></span></code></pre></div>
+</div>
+<p>The solver clones a new vector, sets the <code>controlDict</code>, runs the solver and then creates a new vector representing the last time slice.</p>
+<div class="named-code-block">
+<p>«pintfoam-solution-function»</p>
+<div class="sourceCode" id="cb19"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb19-1"><a href="#cb19-1" aria-hidden="true" tabindex="-1"></a><span class="cf">assert</span> <span class="bu">abs</span>(<span class="bu">float</span>(x.time) <span class="op">-</span> t_0) <span class="op">&lt;</span> epsilon, <span class="ss">f&quot;Times should match: </span><span class="sc">{</span>t_0<span class="sc">}</span><span class="ss"> != </span><span class="sc">{x.</span>time<span class="sc">}</span><span class="ss">.&quot;</span></span>
+<span id="cb19-2"><a href="#cb19-2" aria-hidden="true" tabindex="-1"></a>y <span class="op">=</span> x.clone(job_name)</span>
+<span id="cb19-3"><a href="#cb19-3" aria-hidden="true" tabindex="-1"></a>write_interval <span class="op">=</span> write_interval <span class="kw">or</span> (t_1 <span class="op">-</span> t_0)</span>
+<span id="cb19-4"><a href="#cb19-4" aria-hidden="true" tabindex="-1"></a><span class="op">&lt;&lt;</span><span class="bu">set</span><span class="op">-</span>control<span class="op">-</span><span class="bu">dict</span><span class="op">&gt;&gt;</span></span>
+<span id="cb19-5"><a href="#cb19-5" aria-hidden="true" tabindex="-1"></a><span class="op">&lt;&lt;</span>run<span class="op">-</span>solver<span class="op">&gt;&gt;</span></span>
+<span id="cb19-6"><a href="#cb19-6" aria-hidden="true" tabindex="-1"></a><span class="op">&lt;&lt;</span><span class="cf">return</span><span class="op">-</span>result<span class="op">&gt;&gt;</span></span></code></pre></div>
+</div>
+<section id="controldict" class="level3">
+<h3><code>controlDict</code></h3>
+<p>Because writing the <code>controlDict</code> sometimes fails, we try it a few times. For this we need to create a backup of the original contents of <code>controlDict</code>.</p>
+<div class="named-code-block">
+<p>«set-control-dict»</p>
+<div class="sourceCode" id="cb20"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>backup <span class="op">=</span> <span class="bu">open</span>(y.path <span class="op">/</span> <span class="st">&quot;system&quot;</span> <span class="op">/</span> <span class="st">&quot;controlDict&quot;</span>, <span class="st">&quot;r&quot;</span>).read()</span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> i <span class="kw">in</span> <span class="bu">range</span>(<span class="dv">5</span>):   <span class="co"># this sometimes fails, so we try a few times, maybe disk sync issue?</span></span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a>    <span class="cf">try</span>:</span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a>        <span class="bu">print</span>(<span class="ss">f&quot;Attempt </span><span class="sc">{i</span><span class="op">+</span><span class="dv">1</span><span class="sc">}</span><span class="ss"> at writing controlDict&quot;</span>)</span>
+<span id="cb20-5"><a href="#cb20-5" aria-hidden="true" tabindex="-1"></a>        controlDict <span class="op">=</span> parameter_file(y, <span class="st">&quot;system/controlDict&quot;</span>)</span>
+<span id="cb20-6"><a href="#cb20-6" aria-hidden="true" tabindex="-1"></a>        controlDict.content[<span class="st">&#39;startFrom&#39;</span>] <span class="op">=</span> <span class="st">&quot;latestTime&quot;</span></span>
+<span id="cb20-7"><a href="#cb20-7" aria-hidden="true" tabindex="-1"></a>        controlDict.content[<span class="st">&#39;startTime&#39;</span>] <span class="op">=</span> <span class="bu">float</span>(t_0)</span>
+<span id="cb20-8"><a href="#cb20-8" aria-hidden="true" tabindex="-1"></a>        controlDict.content[<span class="st">&#39;endTime&#39;</span>] <span class="op">=</span> <span class="bu">float</span>(t_1)</span>
+<span id="cb20-9"><a href="#cb20-9" aria-hidden="true" tabindex="-1"></a>        controlDict.content[<span class="st">&#39;deltaT&#39;</span>] <span class="op">=</span> <span class="bu">float</span>(dt)</span>
+<span id="cb20-10"><a href="#cb20-10" aria-hidden="true" tabindex="-1"></a>        controlDict.content[<span class="st">&#39;writeInterval&#39;</span>] <span class="op">=</span> <span class="bu">float</span>(write_interval)</span>
+<span id="cb20-11"><a href="#cb20-11" aria-hidden="true" tabindex="-1"></a>        controlDict.content[<span class="st">&#39;writeControl&#39;</span>] <span class="op">=</span> write_control</span>
+<span id="cb20-12"><a href="#cb20-12" aria-hidden="true" tabindex="-1"></a>        controlDict.writeFile()</span>
+<span id="cb20-13"><a href="#cb20-13" aria-hidden="true" tabindex="-1"></a>        <span class="cf">break</span></span>
+<span id="cb20-14"><a href="#cb20-14" aria-hidden="true" tabindex="-1"></a>    <span class="cf">except</span> <span class="pp">Exception</span> <span class="im">as</span> e:</span>
+<span id="cb20-15"><a href="#cb20-15" aria-hidden="true" tabindex="-1"></a>        exception <span class="op">=</span> e</span>
+<span id="cb20-16"><a href="#cb20-16" aria-hidden="true" tabindex="-1"></a>        <span class="bu">open</span>(y.path <span class="op">/</span> <span class="st">&quot;system&quot;</span> <span class="op">/</span> <span class="st">&quot;controlDict&quot;</span>, <span class="st">&quot;w&quot;</span>).write(backup)</span>
+<span id="cb20-17"><a href="#cb20-17" aria-hidden="true" tabindex="-1"></a><span class="cf">else</span>:</span>
+<span id="cb20-18"><a href="#cb20-18" aria-hidden="true" tabindex="-1"></a>    <span class="cf">raise</span> exception</span></code></pre></div>
+</div>
+</section>
+<section id="run-solver" class="level3">
+<h3>Run solver</h3>
+<div class="named-code-block">
+<p>«run-solver»</p>
+<div class="sourceCode" id="cb21"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="cf">with</span> <span class="bu">open</span>(y.path <span class="op">/</span> <span class="st">&quot;log.stdout&quot;</span>, <span class="st">&quot;w&quot;</span>) <span class="im">as</span> logfile, <span class="op">\</span></span>
+<span id="cb21-2"><a href="#cb21-2" aria-hidden="true" tabindex="-1"></a>     <span class="bu">open</span>(y.path <span class="op">/</span> <span class="st">&quot;log.stderr&quot;</span>, <span class="st">&quot;w&quot;</span>) <span class="im">as</span> errfile:</span>
+<span id="cb21-3"><a href="#cb21-3" aria-hidden="true" tabindex="-1"></a>    subprocess.run(solver, cwd<span class="op">=</span>y.path, check<span class="op">=</span><span class="va">True</span>, stdout<span class="op">=</span>logfile, stderr<span class="op">=</span>errfile)</span></code></pre></div>
+</div>
+</section>
+<section id="return-result" class="level3">
+<h3>Return result</h3>
+<p>We retrieve the time of the result by looking at the last time directory.</p>
+<div class="named-code-block">
+<p>«return-result»</p>
+<div class="sourceCode" id="cb22"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb22-1"><a href="#cb22-1" aria-hidden="true" tabindex="-1"></a>t1_str <span class="op">=</span> get_times(y.path)[<span class="op">-</span><span class="dv">1</span>]</span>
+<span id="cb22-2"><a href="#cb22-2" aria-hidden="true" tabindex="-1"></a><span class="cf">return</span> Vector(y.base, y.case, t1_str)</span></code></pre></div>
+</div>
+</section>
+</section>
+</section>
+<section id="appendix-a-utils" class="level1">
+<h1>Appendix A: Utils</h1>
+<div class="named-code-block">
+<p>file:pylsoFoam/utils.py</p>
+<div class="sourceCode" id="cb23"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a><span class="op">&lt;&lt;</span>push<span class="op">-</span><span class="bu">dir</span><span class="op">&gt;&gt;</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a><span class="op">&lt;&lt;</span>job<span class="op">-</span>names<span class="op">&gt;&gt;</span></span></code></pre></div>
+</div>
+<section id="cleaning-up" class="level2">
+<h2>Cleaning up</h2>
+<div class="named-code-block">
+<p>file:pylsoFoam/clean.py</p>
+<div class="sourceCode" id="cb24"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb24-1"><a href="#cb24-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> argh  <span class="co"># type:ignore</span></span>
+<span id="cb24-2"><a href="#cb24-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
+<span id="cb24-3"><a href="#cb24-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> .vector <span class="im">import</span> BaseCase</span>
+<span id="cb24-4"><a href="#cb24-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-5"><a href="#cb24-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-6"><a href="#cb24-6" aria-hidden="true" tabindex="-1"></a><span class="at">@argh.arg</span>(<span class="st">&quot;target&quot;</span>, <span class="bu">help</span><span class="op">=</span><span class="st">&quot;target path to clean&quot;</span>)</span>
+<span id="cb24-7"><a href="#cb24-7" aria-hidden="true" tabindex="-1"></a><span class="at">@argh.arg</span>(<span class="st">&quot;--base_case&quot;</span>, <span class="bu">help</span><span class="op">=</span><span class="st">&quot;name of the base-case&quot;</span>)</span>
+<span id="cb24-8"><a href="#cb24-8" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> main(target: Path, base_case: <span class="bu">str</span> <span class="op">=</span> <span class="st">&quot;baseCase&quot;</span>):</span>
+<span id="cb24-9"><a href="#cb24-9" aria-hidden="true" tabindex="-1"></a>    <span class="co">&quot;&quot;&quot;Auxiliary function that deletes all vectors of this base-case.&quot;&quot;&quot;</span></span>
+<span id="cb24-10"><a href="#cb24-10" aria-hidden="true" tabindex="-1"></a>    BaseCase(Path(target), base_case).clean()</span>
+<span id="cb24-11"><a href="#cb24-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-12"><a href="#cb24-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb24-13"><a href="#cb24-13" aria-hidden="true" tabindex="-1"></a><span class="cf">if</span> <span class="va">__name__</span> <span class="op">==</span> <span class="st">&quot;__main__&quot;</span>:</span>
+<span id="cb24-14"><a href="#cb24-14" aria-hidden="true" tabindex="-1"></a>    argh.dispatch_command(main)</span></code></pre></div>
+</div>
+</section>
+<section id="pushd" class="level2">
+<h2><code>pushd</code></h2>
+<p>I haven’t been able (with simple attempts) to run a case outside the definition directory. Similar to the <code>pushd</code> bash command, I define a little utility in Python:</p>
+<div class="named-code-block">
+<p>«push-dir»</p>
+<div class="sourceCode" id="cb25"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> os</span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> contextlib <span class="im">import</span> contextmanager</span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> typing <span class="im">import</span> Union</span>
+<span id="cb25-5"><a href="#cb25-5" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> functools</span>
+<span id="cb25-6"><a href="#cb25-6" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> math <span class="im">import</span> (floor, log10)</span>
+<span id="cb25-7"><a href="#cb25-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-8"><a href="#cb25-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-9"><a href="#cb25-9" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> decorator(f):</span>
+<span id="cb25-10"><a href="#cb25-10" aria-hidden="true" tabindex="-1"></a>    <span class="co">&quot;&quot;&quot;Creates a parametric decorator from a function. The resulting decorator</span></span>
+<span id="cb25-11"><a href="#cb25-11" aria-hidden="true" tabindex="-1"></a><span class="co">    will optionally take keyword arguments.&quot;&quot;&quot;</span></span>
+<span id="cb25-12"><a href="#cb25-12" aria-hidden="true" tabindex="-1"></a>    <span class="at">@functools.wraps</span>(f)</span>
+<span id="cb25-13"><a href="#cb25-13" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> decorated_function(<span class="op">*</span>args, <span class="op">**</span>kwargs):</span>
+<span id="cb25-14"><a href="#cb25-14" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> args <span class="kw">and</span> <span class="bu">len</span>(args) <span class="op">==</span> <span class="dv">1</span>:</span>
+<span id="cb25-15"><a href="#cb25-15" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> f(<span class="op">*</span>args, <span class="op">**</span>kwargs)</span>
+<span id="cb25-16"><a href="#cb25-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-17"><a href="#cb25-17" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> args:</span>
+<span id="cb25-18"><a href="#cb25-18" aria-hidden="true" tabindex="-1"></a>            <span class="cf">raise</span> <span class="pp">TypeError</span>(</span>
+<span id="cb25-19"><a href="#cb25-19" aria-hidden="true" tabindex="-1"></a>                <span class="st">&quot;This decorator only accepts extra keyword arguments.&quot;</span>)</span>
+<span id="cb25-20"><a href="#cb25-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-21"><a href="#cb25-21" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="kw">lambda</span> g: f(g, <span class="op">**</span>kwargs)</span>
+<span id="cb25-22"><a href="#cb25-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-23"><a href="#cb25-23" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> decorated_function</span>
+<span id="cb25-24"><a href="#cb25-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-25"><a href="#cb25-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-26"><a href="#cb25-26" aria-hidden="true" tabindex="-1"></a><span class="at">@contextmanager</span></span>
+<span id="cb25-27"><a href="#cb25-27" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> pushd(path: Union[<span class="bu">str</span>, Path]):</span>
+<span id="cb25-28"><a href="#cb25-28" aria-hidden="true" tabindex="-1"></a>    <span class="co">&quot;&quot;&quot;Context manager to change directory to given path,</span></span>
+<span id="cb25-29"><a href="#cb25-29" aria-hidden="true" tabindex="-1"></a><span class="co">    and get back to current dir at exit.&quot;&quot;&quot;</span></span>
+<span id="cb25-30"><a href="#cb25-30" aria-hidden="true" tabindex="-1"></a>    prev <span class="op">=</span> Path.cwd()</span>
+<span id="cb25-31"><a href="#cb25-31" aria-hidden="true" tabindex="-1"></a>    os.chdir(path)</span>
+<span id="cb25-32"><a href="#cb25-32" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-33"><a href="#cb25-33" aria-hidden="true" tabindex="-1"></a>    <span class="cf">try</span>:</span>
+<span id="cb25-34"><a href="#cb25-34" aria-hidden="true" tabindex="-1"></a>        <span class="cf">yield</span></span>
+<span id="cb25-35"><a href="#cb25-35" aria-hidden="true" tabindex="-1"></a>    <span class="cf">finally</span>:</span>
+<span id="cb25-36"><a href="#cb25-36" aria-hidden="true" tabindex="-1"></a>        os.chdir(prev)</span></code></pre></div>
+</div>
+</section>
+<section id="job-names" class="level2">
+<h2>Job names</h2>
+<div class="named-code-block">
+<p>«job-names»</p>
+<div class="sourceCode" id="cb26"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> generate_job_name(n, t_0, t_1, uid, <span class="bu">id</span>, tlength<span class="op">=</span><span class="dv">4</span>):</span>
+<span id="cb26-2"><a href="#cb26-2" aria-hidden="true" tabindex="-1"></a>    <span class="co">&quot;&quot;&quot; Auxiliary function to generate a job name.&quot;&quot;&quot;</span></span>
+<span id="cb26-3"><a href="#cb26-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-4"><a href="#cb26-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> integrify(t, length<span class="op">=</span>tlength):</span>
+<span id="cb26-5"><a href="#cb26-5" aria-hidden="true" tabindex="-1"></a>        <span class="co">&quot;&quot;&quot; Auxiliary function for converting a float into an integer. &quot;&quot;&quot;</span></span>
+<span id="cb26-6"><a href="#cb26-6" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> t<span class="op">==</span><span class="dv">0</span>:</span>
+<span id="cb26-7"><a href="#cb26-7" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> <span class="dv">0</span></span>
+<span id="cb26-8"><a href="#cb26-8" aria-hidden="true" tabindex="-1"></a>        <span class="cf">else</span>:</span>
+<span id="cb26-9"><a href="#cb26-9" aria-hidden="true" tabindex="-1"></a>            aux <span class="op">=</span> t <span class="op">*</span> <span class="dv">10</span> <span class="op">**</span> <span class="op">-</span>floor(log10(t)) <span class="co"># Remove trailing zeros</span></span>
+<span id="cb26-10"><a href="#cb26-10" aria-hidden="true" tabindex="-1"></a>            aux <span class="op">=</span> aux <span class="op">*</span> <span class="dv">10</span> <span class="op">**</span> (length <span class="op">-</span> <span class="dv">1</span>) <span class="co"># Displace the decimal point to the right</span></span>
+<span id="cb26-11"><a href="#cb26-11" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="bu">int</span>(aux)</span>
+<span id="cb26-12"><a href="#cb26-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-13"><a href="#cb26-13" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> trim_zeros(t):</span>
+<span id="cb26-14"><a href="#cb26-14" aria-hidden="true" tabindex="-1"></a>        <span class="co">&quot;&quot;&quot;Trim zeros</span></span>
+<span id="cb26-15"><a href="#cb26-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-16"><a href="#cb26-16" aria-hidden="true" tabindex="-1"></a><span class="co">        for instance:</span></span>
+<span id="cb26-17"><a href="#cb26-17" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-18"><a href="#cb26-18" aria-hidden="true" tabindex="-1"></a><span class="co">        trim_zeros(0.0012345)</span></span>
+<span id="cb26-19"><a href="#cb26-19" aria-hidden="true" tabindex="-1"></a><span class="co">        1.2345</span></span>
+<span id="cb26-20"><a href="#cb26-20" aria-hidden="true" tabindex="-1"></a><span class="co">        &quot;&quot;&quot;</span></span>
+<span id="cb26-21"><a href="#cb26-21" aria-hidden="true" tabindex="-1"></a>        <span class="cf">if</span> t <span class="op">==</span> <span class="dv">0</span>:</span>
+<span id="cb26-22"><a href="#cb26-22" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> <span class="dv">0</span></span>
+<span id="cb26-23"><a href="#cb26-23" aria-hidden="true" tabindex="-1"></a>        <span class="cf">else</span>:</span>
+<span id="cb26-24"><a href="#cb26-24" aria-hidden="true" tabindex="-1"></a>            <span class="cf">return</span> t <span class="op">*</span> <span class="dv">10</span> <span class="op">**</span> <span class="op">-</span>floor(log10(t))</span>
+<span id="cb26-25"><a href="#cb26-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-26"><a href="#cb26-26" aria-hidden="true" tabindex="-1"></a>    <span class="kw">def</span> stringify(t, length<span class="op">=</span>tlength):</span>
+<span id="cb26-27"><a href="#cb26-27" aria-hidden="true" tabindex="-1"></a>        <span class="co">&quot;&quot;&quot; Turn a float into a string with a given length</span></span>
+<span id="cb26-28"><a href="#cb26-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-29"><a href="#cb26-29" aria-hidden="true" tabindex="-1"></a><span class="co">        for instance:</span></span>
+<span id="cb26-30"><a href="#cb26-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-31"><a href="#cb26-31" aria-hidden="true" tabindex="-1"></a><span class="co">        stringify(0.0012345, length=2)</span></span>
+<span id="cb26-32"><a href="#cb26-32" aria-hidden="true" tabindex="-1"></a><span class="co">        &#39;12&#39;</span></span>
+<span id="cb26-33"><a href="#cb26-33" aria-hidden="true" tabindex="-1"></a><span class="co">        &quot;&quot;&quot;</span></span>
+<span id="cb26-34"><a href="#cb26-34" aria-hidden="true" tabindex="-1"></a>        format_string <span class="op">=</span> <span class="st">&quot;.&quot;</span> <span class="op">+</span> <span class="bu">str</span>(length<span class="op">-</span><span class="dv">1</span>) <span class="op">+</span> <span class="st">&quot;f&quot;</span> <span class="co"># For instance: .5f</span></span>
+<span id="cb26-35"><a href="#cb26-35" aria-hidden="true" tabindex="-1"></a>        <span class="cf">return</span> <span class="ss">f&quot;</span><span class="sc">{</span>trim_zeros(t)<span class="sc">:</span>{format_string}<span class="sc">}</span><span class="ss">&quot;</span>.replace(<span class="st">&quot;.&quot;</span>, <span class="st">&quot;&quot;</span>)</span>
+<span id="cb26-36"><a href="#cb26-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb26-37"><a href="#cb26-37" aria-hidden="true" tabindex="-1"></a>    <span class="cf">return</span> <span class="ss">f&quot;</span><span class="sc">{n}</span><span class="ss">-</span><span class="sc">{</span>stringify(t_0)<span class="sc">}</span><span class="ss">-</span><span class="sc">{</span>stringify(t_1)<span class="sc">}</span><span class="ss">-</span><span class="sc">{</span><span class="bu">id</span><span class="sc">}</span><span class="ss">-</span><span class="sc">{</span>uid<span class="sc">.</span><span class="bu">hex</span><span class="sc">}</span><span class="ss">&quot;</span></span></code></pre></div>
+</div>
+</section>
+</section>
+<section id="unit-testing" class="level1">
+<h1>Unit testing</h1>
+<p>Unit testing needs to be done on cases that are easy. For the moment we have selected <code>pitzDaily</code> for this.</p>
+<div class="named-code-block">
+<p>file:test/test_foam_run.py</p>
+<div class="sourceCode" id="cb27"><pre class="sourceCode python"><code class="sourceCode python"><span id="cb27-1"><a href="#cb27-1" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pathlib <span class="im">import</span> Path</span>
+<span id="cb27-2"><a href="#cb27-2" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> shutil <span class="im">import</span> copytree</span>
+<span id="cb27-3"><a href="#cb27-3" aria-hidden="true" tabindex="-1"></a><span class="im">import</span> numpy <span class="im">as</span> np</span>
+<span id="cb27-4"><a href="#cb27-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-5"><a href="#cb27-5" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pintFoam.vector <span class="im">import</span> BaseCase</span>
+<span id="cb27-6"><a href="#cb27-6" aria-hidden="true" tabindex="-1"></a><span class="im">from</span> pintFoam.foam <span class="im">import</span> (block_mesh, foam)</span>
+<span id="cb27-7"><a href="#cb27-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-8"><a href="#cb27-8" aria-hidden="true" tabindex="-1"></a>pitzDaily_fields <span class="op">=</span> {</span>
+<span id="cb27-9"><a href="#cb27-9" aria-hidden="true" tabindex="-1"></a>    <span class="st">&quot;T&quot;</span>, <span class="st">&quot;U&quot;</span>, <span class="st">&quot;phi&quot;</span></span>
+<span id="cb27-10"><a href="#cb27-10" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb27-11"><a href="#cb27-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-12"><a href="#cb27-12" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> test_basic_pitzDaily(tmp_path):</span>
+<span id="cb27-13"><a href="#cb27-13" aria-hidden="true" tabindex="-1"></a>    path <span class="op">=</span> Path(tmp_path) <span class="op">/</span> <span class="st">&quot;case0&quot;</span></span>
+<span id="cb27-14"><a href="#cb27-14" aria-hidden="true" tabindex="-1"></a>    data <span class="op">=</span> Path(<span class="st">&quot;.&quot;</span>) <span class="op">/</span> <span class="st">&quot;test&quot;</span> <span class="op">/</span> <span class="st">&quot;cases&quot;</span> <span class="op">/</span> <span class="st">&quot;pitzDaily&quot;</span></span>
+<span id="cb27-15"><a href="#cb27-15" aria-hidden="true" tabindex="-1"></a>    copytree(data, path <span class="op">/</span> <span class="st">&quot;base&quot;</span>)</span>
+<span id="cb27-16"><a href="#cb27-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-17"><a href="#cb27-17" aria-hidden="true" tabindex="-1"></a>    base_case <span class="op">=</span> BaseCase(path, <span class="st">&quot;base&quot;</span>)</span>
+<span id="cb27-18"><a href="#cb27-18" aria-hidden="true" tabindex="-1"></a>    base_case.fields <span class="op">=</span> pitzDaily_fields</span>
+<span id="cb27-19"><a href="#cb27-19" aria-hidden="true" tabindex="-1"></a>    block_mesh(base_case)</span>
+<span id="cb27-20"><a href="#cb27-20" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-21"><a href="#cb27-21" aria-hidden="true" tabindex="-1"></a>    base_vec <span class="op">=</span> base_case.new_vector()</span>
+<span id="cb27-22"><a href="#cb27-22" aria-hidden="true" tabindex="-1"></a>    init_vec <span class="op">=</span> foam(<span class="st">&quot;scalarTransportFoam&quot;</span>, <span class="fl">0.001</span>, base_vec, <span class="fl">0.0</span>, <span class="fl">0.001</span>)</span>
+<span id="cb27-23"><a href="#cb27-23" aria-hidden="true" tabindex="-1"></a>    <span class="co"># init_vec.time = &quot;0&quot;</span></span>
+<span id="cb27-24"><a href="#cb27-24" aria-hidden="true" tabindex="-1"></a>    end_vec <span class="op">=</span> foam(<span class="st">&quot;scalarTransportFoam&quot;</span>, <span class="fl">0.01</span>, init_vec, <span class="fl">0.001</span>, <span class="fl">0.1</span>)</span>
+<span id="cb27-25"><a href="#cb27-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-26"><a href="#cb27-26" aria-hidden="true" tabindex="-1"></a>    <span class="cf">assert</span> end_vec.dirname.exists()</span>
+<span id="cb27-27"><a href="#cb27-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-28"><a href="#cb27-28" aria-hidden="true" tabindex="-1"></a>    end_vec_clone <span class="op">=</span> end_vec.clone()</span>
+<span id="cb27-29"><a href="#cb27-29" aria-hidden="true" tabindex="-1"></a>    <span class="cf">assert</span> end_vec_clone.time <span class="op">==</span> end_vec.time</span>
+<span id="cb27-30"><a href="#cb27-30" aria-hidden="true" tabindex="-1"></a>    <span class="co"># assert get_times(end_vec_clone.path) == [&quot;0&quot;, &quot;0.1&quot;]</span></span>
+<span id="cb27-31"><a href="#cb27-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-32"><a href="#cb27-32" aria-hidden="true" tabindex="-1"></a>    diff_vec <span class="op">=</span> end_vec <span class="op">-</span> init_vec</span>
+<span id="cb27-33"><a href="#cb27-33" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-34"><a href="#cb27-34" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> f <span class="kw">in</span> pitzDaily_fields:</span>
+<span id="cb27-35"><a href="#cb27-35" aria-hidden="true" tabindex="-1"></a>        <span class="cf">with</span> end_vec.mmap_data(f) <span class="im">as</span> a, <span class="op">\</span></span>
+<span id="cb27-36"><a href="#cb27-36" aria-hidden="true" tabindex="-1"></a>             init_vec.mmap_data(f) <span class="im">as</span> b, <span class="op">\</span></span>
+<span id="cb27-37"><a href="#cb27-37" aria-hidden="true" tabindex="-1"></a>             diff_vec.mmap_data(f) <span class="im">as</span> c:</span>
+<span id="cb27-38"><a href="#cb27-38" aria-hidden="true" tabindex="-1"></a>            <span class="cf">assert</span> np.<span class="bu">abs</span>(a() <span class="op">-</span> b() <span class="op">-</span> c()).mean() <span class="op">&lt;</span> <span class="fl">1e-6</span></span>
+<span id="cb27-39"><a href="#cb27-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-40"><a href="#cb27-40" aria-hidden="true" tabindex="-1"></a>    <span class="co"># assert diff_vec.time == &quot;0.1&quot;</span></span>
+<span id="cb27-41"><a href="#cb27-41" aria-hidden="true" tabindex="-1"></a>    orig_vec <span class="op">=</span> init_vec <span class="op">+</span> diff_vec</span>
+<span id="cb27-42"><a href="#cb27-42" aria-hidden="true" tabindex="-1"></a>    should_be_zero <span class="op">=</span> end_vec <span class="op">-</span> orig_vec</span>
+<span id="cb27-43"><a href="#cb27-43" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> f <span class="kw">in</span> pitzDaily_fields:</span>
+<span id="cb27-44"><a href="#cb27-44" aria-hidden="true" tabindex="-1"></a>        <span class="cf">with</span> should_be_zero.mmap_data(f) <span class="im">as</span> v:</span>
+<span id="cb27-45"><a href="#cb27-45" aria-hidden="true" tabindex="-1"></a>            <span class="cf">assert</span> np.<span class="bu">all</span>(np.<span class="bu">abs</span>(v()) <span class="op">&lt;</span> <span class="fl">1e-6</span>)</span>
+<span id="cb27-46"><a href="#cb27-46" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-47"><a href="#cb27-47" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-48"><a href="#cb27-48" aria-hidden="true" tabindex="-1"></a><span class="kw">def</span> test_restart(tmp_path):</span>
+<span id="cb27-49"><a href="#cb27-49" aria-hidden="true" tabindex="-1"></a>    path <span class="op">=</span> Path(tmp_path) <span class="op">/</span> <span class="st">&quot;case0&quot;</span></span>
+<span id="cb27-50"><a href="#cb27-50" aria-hidden="true" tabindex="-1"></a>    data <span class="op">=</span> Path(<span class="st">&quot;.&quot;</span>) <span class="op">/</span> <span class="st">&quot;test&quot;</span> <span class="op">/</span> <span class="st">&quot;cases&quot;</span> <span class="op">/</span> <span class="st">&quot;pitzDaily&quot;</span></span>
+<span id="cb27-51"><a href="#cb27-51" aria-hidden="true" tabindex="-1"></a>    copytree(data, path <span class="op">/</span> <span class="st">&quot;base&quot;</span>)</span>
+<span id="cb27-52"><a href="#cb27-52" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-53"><a href="#cb27-53" aria-hidden="true" tabindex="-1"></a>    base_case <span class="op">=</span> BaseCase(path, <span class="st">&quot;base&quot;</span>)</span>
+<span id="cb27-54"><a href="#cb27-54" aria-hidden="true" tabindex="-1"></a>    base_case.fields <span class="op">=</span> pitzDaily_fields</span>
+<span id="cb27-55"><a href="#cb27-55" aria-hidden="true" tabindex="-1"></a>    block_mesh(base_case)</span>
+<span id="cb27-56"><a href="#cb27-56" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb27-57"><a href="#cb27-57" aria-hidden="true" tabindex="-1"></a>    init_vec <span class="op">=</span> base_case.new_vector()</span>
+<span id="cb27-58"><a href="#cb27-58" aria-hidden="true" tabindex="-1"></a>    check <span class="op">=</span> foam(<span class="st">&quot;scalarTransportFoam&quot;</span>, <span class="fl">0.01</span>, init_vec, <span class="fl">0.0</span>, <span class="fl">0.2</span>)</span>
+<span id="cb27-59"><a href="#cb27-59" aria-hidden="true" tabindex="-1"></a>    end_vec <span class="op">=</span> foam(<span class="st">&quot;scalarTransportFoam&quot;</span>, <span class="fl">0.01</span>, init_vec, <span class="fl">0.0</span>, <span class="fl">0.1</span>)</span>
+<span id="cb27-60"><a href="#cb27-60" aria-hidden="true" tabindex="-1"></a>    init_vec <span class="op">=</span> end_vec.clone()</span>
+<span id="cb27-61"><a href="#cb27-61" aria-hidden="true" tabindex="-1"></a>    end_vec <span class="op">=</span> foam(<span class="st">&quot;scalarTransportFoam&quot;</span>, <span class="fl">0.01</span>, init_vec, <span class="fl">0.1</span>, <span class="fl">0.2</span>)</span>
+<span id="cb27-62"><a href="#cb27-62" aria-hidden="true" tabindex="-1"></a>    diff <span class="op">=</span> end_vec <span class="op">-</span> check</span>
+<span id="cb27-63"><a href="#cb27-63" aria-hidden="true" tabindex="-1"></a>    <span class="cf">for</span> f <span class="kw">in</span> pitzDaily_fields:</span>
+<span id="cb27-64"><a href="#cb27-64" aria-hidden="true" tabindex="-1"></a>        <span class="cf">with</span> diff.mmap_data(f) <span class="im">as</span> v:</span>
+<span id="cb27-65"><a href="#cb27-65" aria-hidden="true" tabindex="-1"></a>            <span class="cf">assert</span> np.<span class="bu">all</span>(np.<span class="bu">abs</span>(v()) <span class="op">&lt;</span> <span class="fl">1e-6</span>)</span></code></pre></div>
+</div>
+</section>
+        </div>
+         <div class="col-3 col-s-3 menu" id="menu-container">
+                <div id="menu"><nav id="TOC" role="doc-toc">
+                                <ul>
+                                <li><a href="#admin">Admin</a></li>
+                                <li><a href="#license">License</a></li>
+                                <li><a href="#architecture">Architecture</a>
+                                <ul>
+                                <li><a href="#implementation">Implementation</a></li>
+                                </ul></li>
+                                <li><a href="#openfoam-calls">OpenFOAM calls</a>
+                                <ul>
+                                <li><a href="#setfields-utility"><code>setFields</code> utility</a></li>
+                                <li><a href="#mapfields"><code>mapFields</code></a></li>
+                                <li><a href="#blockmesh"><code>blockMesh</code></a></li>
+                                <li><a href="#implementation-of-solution">Implementation of <code>Solution</code></a></li>
+                                </ul></li>
+                                <li><a href="#appendix-a-utils">Appendix A: Utils</a>
+                                <ul>
+                                <li><a href="#cleaning-up">Cleaning up</a></li>
+                                <li><a href="#pushd"><code>pushd</code></a></li>
+                                <li><a href="#job-names">Job names</a></li>
+                                </ul></li>
+                                <li><a href="#unit-testing">Unit testing</a></li>
+                                </ul>
+                </nav></div>
+        </div> 
+</div>
+<div class="footer">
+</div>
+<!-- <script>
+function toggle_dark_mode() {
+    var app = document.getElementsByTagName("BODY")[0];
+    if (localStorage.darkMode == "dark") {
+	localStorage.darkMode = "light";
+	app.setAttribute("dark-mode", "light");
+    } else {
+	localStorage.darkMode = "dark";
+	app.setAttribute("dark-mode", "dark");
+    }
+}
+</script> -->
+</body>
+</html>
