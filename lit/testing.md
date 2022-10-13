@@ -6,8 +6,8 @@ from pathlib import Path
 from shutil import copytree
 import numpy as np
 
-from pintFoam.vector import BaseCase
-from pintFoam.foam import (block_mesh, foam)
+from pylsoFoam.vector import BaseCase
+from pylsoFoam.foam import (block_mesh, foam)
 
 pitzDaily_fields = {
     "T", "U", "phi"
