@@ -24,12 +24,22 @@ jobs:
       uses: actions/setup-python@v3
       with:
         python-version: ${{ matrix.python-version }}
+    - name: Install packages
+      id: install-packages
+      run: |
+        sudo add-apt-repository ppa:deadsnakes/ppa
+        sudo curl -s https://dl.openfoam.com/add-debian-repo.sh | sudo bash
+        sudo apt-get update
+        sudo apt-get install -y openfoam2106-default libopenmpi-dev
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         python -m pip install poetry
-        poetry install
+        poetry install -v
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     - name: Test with pytest
       run: |
+        set +o pipefail
+        source /usr/lib/openfoam/openfoam2106/etc/bashrc || true
         poetry run pytest
+      shell: bash
