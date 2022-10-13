@@ -99,7 +99,11 @@
 <div class="row">
         <div class="col-6 col-s-9" id="main">
 <p><a href="https://entangled.github.io/"><img src="https://img.shields.io/badge/entangled-Use%20the%20source!-%2300aeff" alt="Entangled badge" /></a></p>
-<p>This module lets you interact with OpenFOAM through Python. You may use it in cases where you need to run a lot of separate computations in OpenFOAM, possibly in parallel. In our view, this fixes a few gaps in the PyFoam module. Here’s what <code>pylso-foam</code> can and <code>PyFoam</code> can’t do: - Run jobs in parallel: PyFoam has a lot of hidden state. In <code>pylso-foam</code> every job runs in its own case directory. - Work with binary OpenFOAM files: by using the <a href="https://parallelwindfarms.github.io/byteparsing"><code>byteparsing</code></a> package, we can interact with binary data. We don’t involve any geometry here, we can just read the raw data and do some arithmetic on it.</p>
+<p>This module lets you interact with OpenFOAM through Python. You may use it in cases where you need to run a lot of separate computations in OpenFOAM, possibly in parallel. In our view, this fixes a few gaps in the PyFoam module. Here’s what <code>pylso-foam</code> can and <code>PyFoam</code> can’t do:</p>
+<ul>
+<li>Run jobs in parallel: PyFoam has a lot of hidden state. In <code>pylso-foam</code> every job runs in its own case directory.</li>
+<li>Work with binary OpenFOAM files: by using the <a href="https://parallelwindfarms.github.io/byteparsing"><code>byteparsing</code></a> package, we can interact with binary data. We don’t involve any geometry here, we can just read the raw data and do some arithmetic on it.</li>
+</ul>
 <section id="admin" class="level1">
 <h1>Admin</h1>
 <p>You may <code>pip install</code> this module. If you’re developing however, we use <code>poetry</code> to manage dependencies.</p>
