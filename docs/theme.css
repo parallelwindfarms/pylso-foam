@@ -2,6 +2,7 @@
 
 :root {
         --primary-support: #66AACC;
+        --darker-primary: #335566;
         --secondary-support: #CCAA66;
         --highlight: #CC44CC;
 }
@@ -44,8 +45,8 @@ body[dark-mode=dark] {
 }
 */
 a {
-        color: var(--primary-support);
-        filter: brightness(50%);
+        color: var(--darker-primary);
+        /* filter: brightness(50%); */
 }
 
 a:hover {
